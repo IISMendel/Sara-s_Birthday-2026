@@ -57,6 +57,22 @@ Il motivo però resta uno solo, quindi lo scrivo qui in chiaro così non si perd
 
 Buon compleanno.`;
 
+/* ═════════ I TUOI FILE ═════════
+   I nomi corrispondono esattamente ai file da caricare su GitHub,
+   nella STESSA cartella di questo index.html. Non rinominarli.
+   L'unico con l'accento (Napul è Ammore) viene codificato in automatico. */
+const VIDEO = { file:"Felt_dolls_arguing_and_laughing_202607271932.mp4", durata:"10 secondi" };
+const BRANI = [
+  { file:"Ippo_Ippo.mp3",                titolo:"Ippo Ippo",            durata:"2:16" },
+  { file:"Irish_Pub.mp3",                titolo:"Irish Pub",            durata:"3:40" },
+  { file:"Napul_è_Ammore.mp3",           titolo:"Napul è Ammore",       durata:"4:34" },
+  { file:"Reaggaeton.mp3",               titolo:"Reaggaeton",           durata:"3:42" },
+  { file:"Techno_pesante.mp3",           titolo:"Techno pesante",       durata:"3:07" },
+  { file:"Vent_anni__i_Respettu.mp3",    titolo:"Vent'anni i Respettu", durata:"2:46" },
+  { file:"Venti_Anni_di_Blues.mp3",      titolo:"Venti Anni di Blues",  durata:"5:05" }
+];
+const url = f => encodeURIComponent(f);   // gestisce accenti e spazi nei nomi
+
 const CITAZIONI = [
   ["La vita è quello che ti accade mentre sei impegnato a fare altri progetti.","John Lennon"],
   ["Sii te stesso; tutti gli altri sono già stati presi.","Oscar Wilde"],
@@ -1684,6 +1700,8 @@ const SEZIONI = [
   { id:"gesti",     emoji:"🌱", titolo:"Un piccolo gesto",   sotto:"da fare oggi",          c1:"#C8E06B", c2:"#4E832A" },
   { id:"domande",   emoji:"💭", titolo:"Domanda del giorno", sotto:"da rigirarsi in testa", c1:"#F5A9B8", c2:"#993462" },
   { id:"barattolo", emoji:"🫙", titolo:"Barattolo dei ricordi", sotto:"scrivi tu",          c1:"#7FD1E8", c2:"#26639A" },
+  { id:"video",     emoji:"🎬", titolo:"Il video",           sotto:"fatto apposta per te",  c1:"#FF9E6B", c2:"#C4342E" },
+  { id:"colonna",   emoji:"🎧", titolo:"Le tue canzoni",     sotto:BRANI.length+" brani inediti", c1:"#9FE0FF", c2:"#2350B8" },
   { id:"sorpresa",  emoji:"🎁", titolo:"Sorpresa speciale",  sotto:"il motivo di tutto questo", c1:"#FFD866", c2:"#D53A43" }
 ];
 
@@ -1913,6 +1931,23 @@ function contenuto(id, forza){
     `<textarea id="nuovo" rows="3" placeholder="Oggi è successo che…"></textarea><button class="pill salvaR">Metti nel barattolo 🫙</button>`+
     (S.barattolo.length?`<div class="ricordi">`+S.barattolo.slice().reverse().map(r=>`<div class="ric"><p>${esc(r.t)}</p><span>${esc(r.d)}</span></div>`).join("")+`</div>`
       :`<p class="nota">Il barattolo è vuoto. Il primo ricordo è sempre il più difficile da scrivere.</p>`); }
+  if (id==="video"){
+    return cap("🎬","Il video","non lo trovi da nessun'altra parte")+
+      `<video class="filmato" controls playsinline preload="metadata" src="${url(VIDEO.file)}"></video>
+       <p class="nota">Se non parte, tocca il tasto play: i browser non fanno partire i video con l'audio da soli.</p>`; }
+  if (id==="colonna"){
+    return cap("🎧","Le tue canzoni",BRANI.length+" brani scritti apposta per te")+
+      `<div class="oraSuona" id="oraSuona"></div>
+       <div class="comandi">
+         <button class="cmd" id="cPrec" aria-label="Precedente">⏮</button>
+         <button class="cmd grande" id="cPlay" aria-label="Play">▶</button>
+         <button class="cmd" id="cSucc" aria-label="Successiva">⏭</button>
+       </div>
+       <div class="barra" id="barra"><i id="riempi"></i></div>
+       <div class="tempi"><span id="tOra">0:00</span><span id="tTot">--:--</span></div>
+       <div class="brani">` +
+        BRANI.map((b,i)=>`<button class="brano" data-i="${i}"><span class="bn">${String(i+1).padStart(2,"0")}</span><span class="bt">${b.titolo}</span><span class="bd">${b.durata}</span></button>`).join("") +
+      `</div><p class="nota">La musica continua anche se chiudi questa scheda e giri la ruota.</p>`; }
   if (id==="sorpresa"){ return cap("🎁","Sorpresa speciale","")+
     `<p class="corpo pre">${esc(MESSAGGIO_PERSONALE)}</p><p class="firma">— ${esc(FIRMA)}</p>`+indizi(); }
   return "";
@@ -1926,6 +1961,8 @@ const indizi = ()=>`<div class="indizi"><h4>🔍 Quattro segreti nascosti qui de
   <p class="punt">${S.segreti.length} su 4</p></div>`;
 
 function aggancia(id){
+  if (id==="colonna") agganciaLettore();
+  if (id==="video") { const v=foglio.querySelector("video"); if(v) v.addEventListener("play", ()=>lettore.pause()); }
   if (id==="buste") foglio.querySelectorAll(".busta").forEach(b=>b.addEventListener("click",()=>{
     const i=+b.dataset.i; if(S.buste.includes(i)) return;
     S.buste=[...S.buste,i]; salva("sara4:buste",S.buste); coriandoli(80); apri("buste"); statistiche(); }));
@@ -1935,6 +1972,83 @@ function aggancia(id){
     S.barattolo=[...S.barattolo,{t,d:oggi.toLocaleDateString("it-IT")}];
     salva("sara4:barattolo",S.barattolo); coriandoli(70); apri("barattolo"); statistiche(); });
 }
+
+/* ═════════ LETTORE AUDIO ═════════
+   L'elemento <audio> vive fuori dalla scheda, così la musica non si ferma
+   quando Sara chiude il pannello e continua a girare la ruota. */
+const lettore = new Audio();
+lettore.preload = "none";
+let branoCorrente = mem("sara4:brano", 0);
+
+const mmss = s => isNaN(s) ? "--:--" : Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+
+function suona(i, partiSubito){
+  branoCorrente = (i+BRANI.length) % BRANI.length;
+  salva("sara4:brano", branoCorrente);
+  lettore.src = url(BRANI[branoCorrente].file);
+  if (partiSubito !== false) lettore.play().catch(()=>{
+    brindisi("Il browser ha bloccato la riproduzione. Tocca di nuovo play.");
+  });
+  dipingiLettore();
+}
+lettore.addEventListener("ended", ()=> suona(branoCorrente+1));
+lettore.addEventListener("timeupdate", dipingiTempo);
+lettore.addEventListener("loadedmetadata", dipingiTempo);
+lettore.addEventListener("play",  dipingiLettore);
+lettore.addEventListener("pause", dipingiLettore);
+lettore.addEventListener("error", ()=>{
+  if (lettore.src) brindisi("Non trovo il file " + BRANI[branoCorrente].titolo + ". Controlla che sia nella stessa cartella.");
+});
+
+function dipingiTempo(){
+  const t=document.getElementById("tOra"), tt=document.getElementById("tTot"), r=document.getElementById("riempi");
+  if(!t) return;
+  t.textContent = mmss(lettore.currentTime);
+  tt.textContent = mmss(lettore.duration);
+  if (r) r.style.width = (lettore.duration ? lettore.currentTime/lettore.duration*100 : 0)+"%";
+}
+function dipingiLettore(){
+  const suona = !lettore.paused && lettore.src;
+  const mini = document.getElementById("mini");
+  if (mini){
+    mini.classList.toggle("su", !!suona);
+    mini.querySelector("b").textContent = BRANI[branoCorrente].titolo;
+  }
+  const o=document.getElementById("oraSuona");
+  if (o) o.innerHTML = `<span class="eti">${suona?"in riproduzione":"pronta"}</span><b>${BRANI[branoCorrente].titolo}</b>`;
+  const p=document.getElementById("cPlay");
+  if (p) p.textContent = suona ? "⏸" : "▶";
+  document.querySelectorAll(".brano").forEach((b,i)=> b.classList.toggle("attivo", i===branoCorrente));
+  dipingiTempo();
+}
+
+/* comandi dentro la scheda */
+function agganciaLettore(){
+  const play=document.getElementById("cPlay");
+  if(!play) return;
+  play.addEventListener("click", ()=>{
+    if (!lettore.src) return suona(branoCorrente);
+    if (lettore.paused) lettore.play().catch(()=>brindisi("Tocca di nuovo play."));
+    else lettore.pause();
+  });
+  document.getElementById("cPrec").addEventListener("click", ()=> suona(branoCorrente-1));
+  document.getElementById("cSucc").addEventListener("click", ()=> suona(branoCorrente+1));
+  document.querySelectorAll(".brano").forEach(b=> b.addEventListener("click", ()=> suona(+b.dataset.i)));
+  const barra=document.getElementById("barra");
+  barra.addEventListener("click", e=>{
+    if(!lettore.duration) return;
+    const r=barra.getBoundingClientRect();
+    lettore.currentTime = (e.clientX-r.left)/r.width * lettore.duration;
+  });
+  dipingiLettore();
+}
+
+/* mini-indicatore sempre visibile mentre suona */
+const mini=document.createElement("button");
+mini.id="mini";
+mini.innerHTML = `<span class="onde"><i></i><i></i><i></i></span><b></b>`;
+mini.addEventListener("click", ()=> apri("colonna"));
+document.body.appendChild(mini);
 
 /* ═════════ CORIANDOLI ═════════ */
 const cv=document.getElementById("coriandoli"), cx=cv.getContext("2d");
@@ -2104,6 +2218,48 @@ textarea:focus{border-color:#A88BEB}
   padding:14px 24px;border-radius:999px;font-size:14.5px;font-weight:500;text-align:center;
   box-shadow:0 20px 50px rgba(0,0,0,.5);transition:opacity .35s ease,visibility .35s}
 #brindisi.su{opacity:1;visibility:visible}
+
+/* ── video e lettore audio ── */
+.filmato{width:100%;border-radius:18px;display:block;margin-bottom:16px;background:#000;
+  box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.oraSuona{text-align:center;margin-bottom:18px}
+.oraSuona .eti{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--tenue);margin-bottom:4px}
+.oraSuona b{font-family:var(--display);font-weight:600;font-size:22px;line-height:1.2}
+.comandi{display:flex;justify-content:center;align-items:center;gap:18px;margin-bottom:16px}
+.cmd{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.18);cursor:pointer;
+  background:rgba(255,255,255,.09);color:#fff;font-size:17px;line-height:1;transition:background .2s,transform .2s}
+.cmd:hover{background:rgba(255,255,255,.2);transform:scale(1.07)}
+.cmd.grande{width:62px;height:62px;font-size:22px;border:none;
+  background:linear-gradient(120deg,#9FE0FF,#2350B8);box-shadow:0 10px 26px rgba(35,80,184,.45)}
+.barra{height:6px;border-radius:99px;background:rgba(255,255,255,.14);cursor:pointer;overflow:hidden}
+.barra i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#9FE0FF,#FFD866);transition:width .2s linear}
+.tempi{display:flex;justify-content:space-between;font-size:11px;color:var(--tenue);margin:6px 0 20px;font-variant-numeric:tabular-nums}
+.brani{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.brano{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+  padding:11px 14px;border:none;border-radius:14px;background:rgba(255,255,255,.05);color:var(--testo);
+  font-family:var(--sans);font-size:15px;transition:background .2s,transform .2s}
+.brano:hover{background:rgba(255,255,255,.12);transform:translateX(4px)}
+.brano.attivo{background:rgba(159,224,255,.16);box-shadow:inset 0 0 0 1px rgba(159,224,255,.35)}
+.brano.attivo .bt{color:#9FE0FF;font-weight:600}
+.bn{font-size:11px;color:var(--tenue);font-variant-numeric:tabular-nums;min-width:20px}
+.bt{flex:1}
+.bd{font-size:12px;color:var(--tenue);font-variant-numeric:tabular-nums}
+
+#mini{position:fixed;left:clamp(12px,3vw,26px);bottom:calc(126px + env(safe-area-inset-bottom));z-index:46;
+  display:flex;align-items:center;gap:10px;max-width:min(230px,52vw);cursor:pointer;
+  padding:9px 16px 9px 13px;border-radius:999px;border:1px solid rgba(159,224,255,.3);
+  background:rgba(21,12,38,.9);backdrop-filter:blur(10px);color:var(--testo);font-family:var(--sans);font-size:12.5px;
+  opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .35s,visibility .35s,transform .35s}
+#mini.su{opacity:1;visibility:visible;transform:none}
+#mini b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.onde{display:flex;align-items:flex-end;gap:2px;height:14px}
+.onde i{display:block;width:3px;border-radius:2px;background:#9FE0FF;animation:onda .9s ease-in-out infinite}
+.onde i:nth-child(1){height:6px;animation-delay:0s}
+.onde i:nth-child(2){height:13px;animation-delay:.2s}
+.onde i:nth-child(3){height:9px;animation-delay:.4s}
+@keyframes onda{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@media(max-height:700px){#mini{bottom:calc(108px + env(safe-area-inset-bottom))}}
+
 :focus-visible{outline:2px solid #FFD866;outline-offset:4px}
 @media(max-height:700px){#scena{padding:60px 0 116px}#sotto{padding:22px 16px calc(20px + env(safe-area-inset-bottom))}
   #brindisi{bottom:calc(108px + env(safe-area-inset-bottom))}}
