@@ -1646,7 +1646,11 @@ VIAGGI.push(
 /* ═════════ BASI ═════════ */
 const oggi = new Date();
 const gEpoca = Math.floor(Date.now()/86400000);
-const ruota = (l,n) => l[Math.floor(gEpoca/n) % l.length];
+// Rotazione giornaliera: invece di scorrere la lista in ordine (che darebbe
+// due libri dello stesso autore in giorni consecutivi), avanza a salti di 37.
+// 37 è primo e non divide nessuna delle lunghezze usate, quindi la lista viene
+// percorsa tutta prima di ripetersi: stesso ciclo, ordine sparso.
+const ruota = (l,n) => l[(gEpoca*37) % l.length];
 const caso  = l => l[Math.floor(Math.random()*l.length)];
 const esc   = t => String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const mem   = (k,d) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch{ return d; } };
@@ -1664,19 +1668,19 @@ salva("sara4:visite", S.visite);
 document.getElementById("hNome").textContent = NOME.toUpperCase();
 
 const SEZIONI = [
-  { id:"frase",     emoji:"✨", titolo:"Frase del giorno",   sotto:"cambia ogni 2 giorni",  c1:"#A88BEB", c2:"#6C4FD8" },
+  { id:"frase",     emoji:"✨", titolo:"Frase del giorno",   sotto:"nuova ogni giorno",  c1:"#A88BEB", c2:"#6C4FD8" },
   { id:"ottimismo", emoji:"☀️", titolo:"Dose di ottimismo",  sotto:"una al giorno",         c1:"#FFD866", c2:"#E8892B" },
-  { id:"libri",     emoji:"📚", titolo:"Da leggere",         sotto:LIBRI.length+" titoli",  c1:"#7CA9F2", c2:"#3B50BE" },
-  { id:"ricette",   emoji:"🍳", titolo:"Da cucinare",        sotto:RICETTE.length+" ricette", c1:"#FF8A6B", c2:"#D53A43" },
-  { id:"relax",     emoji:"🧘", titolo:"Relax",              sotto:RELAX.length+" modi",    c1:"#8EDFCA", c2:"#2E8474" },
-  { id:"viaggi",    emoji:"✈️", titolo:"Dove andare",        sotto:VIAGGI.length+" posti",  c1:"#5FD3C4", c2:"#177E90" },
-  { id:"vedere",    emoji:"🎬", titolo:"Da vedere",          sotto:VEDERE.length+" film",   c1:"#B49BEB", c2:"#432F94" },
+  { id:"libri",     emoji:"📚", titolo:"Da leggere",         sotto:"uno nuovo ogni giorno",  c1:"#7CA9F2", c2:"#3B50BE" },
+  { id:"ricette",   emoji:"🍳", titolo:"Da cucinare",        sotto:"una nuova ogni giorno", c1:"#FF8A6B", c2:"#D53A43" },
+  { id:"relax",     emoji:"🧘", titolo:"Relax",              sotto:"un modo nuovo ogni giorno",    c1:"#8EDFCA", c2:"#2E8474" },
+  { id:"viaggi",    emoji:"✈️", titolo:"Dove andare",        sotto:"un posto nuovo ogni giorno",  c1:"#5FD3C4", c2:"#177E90" },
+  { id:"vedere",    emoji:"🎬", titolo:"Da vedere",          sotto:"uno nuovo ogni giorno",   c1:"#B49BEB", c2:"#432F94" },
   { id:"oroscopo",  emoji:"🦁", titolo:"Oroscopo del Leone", sotto:"ogni giorno nuovo",     c1:"#F5B14B", c2:"#C55A24" },
-  { id:"canzone",   emoji:"🎵", titolo:"Canzone del giorno", sotto:CANZONI.length+" pezzi", c1:"#FF9EC4", c2:"#B93381" },
-  { id:"parola",    emoji:"🔤", titolo:"Parola del giorno",  sotto:PAROLE.length+" parole", c1:"#8FD98A", c2:"#28804E" },
-  { id:"curiosita", emoji:"🧠", titolo:"Lo sapevi che",      sotto:CURIOSITA.length+" curiosità", c1:"#6FD3F5", c2:"#1560A0" },
+  { id:"canzone",   emoji:"🎵", titolo:"Canzone del giorno", sotto:"una nuova ogni giorno", c1:"#FF9EC4", c2:"#B93381" },
+  { id:"parola",    emoji:"🔤", titolo:"Parola del giorno",  sotto:"una nuova ogni giorno", c1:"#8FD98A", c2:"#28804E" },
+  { id:"curiosita", emoji:"🧠", titolo:"Lo sapevi che",      sotto:"una nuova ogni giorno", c1:"#6FD3F5", c2:"#1560A0" },
   { id:"buste",     emoji:"💌", titolo:"Apri quando…",       sotto:APRI_QUANDO.length+" buste", c1:"#F2726F", c2:"#8E2465" },
-  { id:"motivi",    emoji:"🌟", titolo:"Perché sei forte",   sotto:MOTIVI.length+" motivi", c1:"#C9A7F5", c2:"#6B44BE" },
+  { id:"motivi",    emoji:"🌟", titolo:"Perché sei forte",   sotto:MOTIVI.length+" motivi, a sorte", c1:"#C9A7F5", c2:"#6B44BE" },
   { id:"gesti",     emoji:"🌱", titolo:"Un piccolo gesto",   sotto:"da fare oggi",          c1:"#C8E06B", c2:"#4E832A" },
   { id:"domande",   emoji:"💭", titolo:"Domanda del giorno", sotto:"da rigirarsi in testa", c1:"#F5A9B8", c2:"#993462" },
   { id:"barattolo", emoji:"🫙", titolo:"Barattolo dei ricordi", sotto:"scrivi tu",          c1:"#7FD1E8", c2:"#26639A" },
@@ -1862,15 +1866,15 @@ const cap=(e,t,s)=>`<div class="fTesta"><div class="fIco">${e}</div><h2>${t}</h2
 const pill=t=>`<button class="pill ancora">${t}</button>`;
 
 function contenuto(id, forza){
-  if (id==="frase"){ const [q,a]=forza?caso(CITAZIONI):ruota(CITAZIONI,2);
-    return cap("✨","Frase del giorno","")+`<blockquote class="grande">${q}</blockquote><p class="autore">— ${a}</p>`+pill("Un'altra ✨"); }
+  if (id==="frase"){ const [q,a]=forza?caso(CITAZIONI):ruota(CITAZIONI,1);
+    return cap("✨","Frase del giorno","cambia ogni giorno")+`<blockquote class="grande">${q}</blockquote><p class="autore">— ${a}</p>`+pill("Un'altra ✨"); }
   if (id==="ottimismo"){ const t=forza?caso(OTTIMISMO):ruota(OTTIMISMO,1);
     return cap("☀️","Dose di ottimismo","una al giorno")+`<p class="grande">${t}</p>`+pill("Ancora un po' ☀️"); }
-  if (id==="libri"){ const [t,a,g,p]=forza?caso(LIBRI):ruota(LIBRI,3);
-    return cap("📚","Da leggere","")+`<h3>${t}</h3><p class="meta">${a} · ${g}</p><p class="corpo">${p}</p>
+  if (id==="libri"){ const [t,a,g,p]=forza?caso(LIBRI):ruota(LIBRI,1);
+    return cap("📚","Da leggere",LIBRI.length+" titoli, uno al giorno")+`<h3>${t}</h3><p class="meta">${a} · ${g}</p><p class="corpo">${p}</p>
       <a class="pill link" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(t+" "+a+" libro")}">Cercalo 🔎</a>`+pill("Un altro 📚"); }
-  if (id==="ricette"){ const [t,tm,df,ing,ps,nt]=forza?caso(RICETTE):ruota(RICETTE,2);
-    return cap("🍳","Da cucinare","")+`<h3>${t}</h3><div class="tag"><span>⏱️ ${tm}</span><span>📊 ${df}</span></div>
+  if (id==="ricette"){ const [t,tm,df,ing,ps,nt]=forza?caso(RICETTE):ruota(RICETTE,1);
+    return cap("🍳","Da cucinare",RICETTE.length+" ricette, una al giorno")+`<h3>${t}</h3><div class="tag"><span>⏱️ ${tm}</span><span>📊 ${df}</span></div>
       <div class="riq"><h4>🛒 Ti serve</h4><ul>${ing.map(i=>`<li>${i}</li>`).join("")}</ul></div>
       <p class="corpo">${ps}</p><p class="nota">😅 ${nt}</p>`+pill("Un'altra 🍳"); }
   if (id==="relax"){ const r=forza?caso(RELAX):ruota(RELAX,1);
@@ -1878,23 +1882,23 @@ function contenuto(id, forza){
       `<div class="tag"><span>${r.e} ${r.t}</span><span>⏱️ ${r.d}</span></div><h3>${r.n}</h3><p class="corpo">${r.x}</p>`+
       (r.c?`<a class="pill link" target="_blank" rel="noopener" href="https://it.wikipedia.org/w/index.php?search=${encodeURIComponent(r.c)}">Guardalo 🔎</a>`:``)+
       pill("Un altro modo 🧘"); }
-  if (id==="viaggi"){ const [l,p,q,d,det,lk]=forza?caso(VIAGGI):ruota(VIAGGI,3);
-    return cap("✈️","Dove andare","")+`<h3>${l}</h3><p class="meta">${p} · periodo ideale: ${q}</p><p class="corpo">${d}</p>
+  if (id==="viaggi"){ const [l,p,q,d,det,lk]=forza?caso(VIAGGI):ruota(VIAGGI,1);
+    return cap("✈️","Dove andare",VIAGGI.length+" posti, uno al giorno")+`<h3>${l}</h3><p class="meta">${p} · periodo ideale: ${q}</p><p class="corpo">${d}</p>
       <div class="riq"><h4>📍 Se ci vai</h4><p>${det}</p></div>
       <div class="links">${lk.map(([n,u])=>`<a target="_blank" rel="noopener" href="${u}">${n} 🌐</a>`).join("")}</div>`+pill("Un altro posto ✈️"); }
-  if (id==="vedere"){ const [t,an,re,pe]=forza?caso(VEDERE):ruota(VEDERE,2);
-    return cap("🎬","Da vedere","")+`<h3>${t}</h3><p class="meta">${re} · ${an}</p><p class="corpo">${pe}</p>
+  if (id==="vedere"){ const [t,an,re,pe]=forza?caso(VEDERE):ruota(VEDERE,1);
+    return cap("🎬","Da vedere",VEDERE.length+" titoli, uno al giorno")+`<h3>${t}</h3><p class="meta">${re} · ${an}</p><p class="corpo">${pe}</p>
       <a class="pill link" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(t+" "+an+" film")}">Dove vederlo 🔎</a>`+pill("Un altro 🎬"); }
   if (id==="oroscopo"){ const t=forza?caso(OROSCOPI):ruota(OROSCOPI,1);
     return cap("🦁","Oroscopo del Leone", oggi.toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}))+
       `<p class="grande">${t}</p><p class="nota">Attendibilità scientifica: zero. Attendibilità affettiva: massima.</p>`+pill("Rilancia 🔮"); }
   if (id==="canzone"){ const [t,a,p]=forza?caso(CANZONI):ruota(CANZONI,1);
-    return cap("🎵","Canzone del giorno","")+`<h3>${t}</h3><p class="meta">${a}</p><p class="corpo">${p}</p>
+    return cap("🎵","Canzone del giorno",CANZONI.length+" pezzi in tutto")+`<h3>${t}</h3><p class="meta">${a}</p><p class="corpo">${p}</p>
       <a class="pill link" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(t+" "+a)}">Ascoltala ▶️</a>`+pill("Un'altra 🎵"); }
   if (id==="parola"){ const [p,d]=forza?caso(PAROLE):ruota(PAROLE,1);
-    return cap("🔤","Parola del giorno","")+`<h3>${p}</h3><p class="corpo">${d}</p>`+pill("Un'altra 🔤"); }
+    return cap("🔤","Parola del giorno",PAROLE.length+" parole rare")+`<h3>${p}</h3><p class="corpo">${d}</p>`+pill("Un'altra 🔤"); }
   if (id==="curiosita"){ const [t,d]=forza?caso(CURIOSITA):ruota(CURIOSITA,1);
-    return cap("🧠","Lo sapevi che","")+`<h3>${t}</h3><p class="corpo">${d}</p>`+pill("Un'altra 🧠"); }
+    return cap("🧠","Lo sapevi che",CURIOSITA.length+" curiosità")+`<h3>${t}</h3><p class="corpo">${d}</p>`+pill("Un'altra 🧠"); }
   if (id==="motivi"){ return cap("🌟","Perché sei forte",MOTIVI.length+" motivi, uno a caso")+
     `<p class="grande">${caso(MOTIVI)}</p>`+pill("Dimmene un altro 🌟"); }
   if (id==="gesti"){ return cap("🌱","Un piccolo gesto","una cosa sola, da fare oggi")+
