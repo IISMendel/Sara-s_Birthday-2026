@@ -36,6 +36,16 @@
   <small>trascina per girare &middot; tocca il nome per aprire</small>
 </div>
 
+<div id="biglietto">
+  <div class="foglio">
+    <div class="nastro">🎁</div>
+    <h2>Buon compleanno <em id="bNome">Sara</em></h2>
+    <p id="bTesto"></p>
+    <p class="bFirma" id="bFirma"></p>
+    <button id="bEntra">Entra ✨</button>
+  </div>
+</div>
+
 <div id="velo"></div>
 <section id="foglio" role="dialog" aria-modal="true"></section>
 <div id="brindisi"></div>
@@ -63,19 +73,32 @@ Il motivo però resta uno solo, quindi lo scrivo qui in chiaro così non si perd
 Buon compleanno.`;
 
 /* ═════════ I TUOI FILE ═════════
-   I nomi corrispondono esattamente ai file da caricare su GitHub,
-   nella STESSA cartella di questo index.html. Non rinominarli.
-   L'unico con l'accento (Napul è Ammore) viene codificato in automatico. */
-const VIDEO = { file:"Felt_dolls_arguing_and_laughing_202607271932.mp4", durata:"10 secondi" };
+   Ogni brano elenca PIÙ nomi possibili: il browser prova il primo, e se
+   non lo trova passa al successivo da solo. Così funziona sia con i file
+   rinominati nella cartella "media", sia con i nomi originali di Suno
+   (con gli spazi) già caricati nella cartella principale.
+   Per aggiungerne uno, basta infilare un nome nella lista. */
+const VIDEO = { titolo:"Il video", durata:"10 secondi", file:[
+  "media/video.mp4",
+  "Felt_dolls_arguing_and_laughing_202607271932.mp4",
+  "Felt dolls arguing and laughing 202607271932.mp4"
+]};
 const BRANI = [
-  { file:"Ippo_Ippo.mp3",                titolo:"Ippo Ippo",            durata:"2:16" },
-  { file:"Irish_Pub.mp3",                titolo:"Irish Pub",            durata:"3:40" },
-  { file:"Napul_è_Ammore.mp3",           titolo:"Napul è Ammore",       durata:"4:34" },
-  { file:"Reaggaeton.mp3",               titolo:"Reaggaeton",           durata:"3:42" },
-  { file:"Techno_pesante.mp3",           titolo:"Techno pesante",       durata:"3:07" },
-  { file:"Vent_anni__i_Respettu.mp3",    titolo:"Vent'anni i Respettu", durata:"2:46" },
-  { file:"Venti_Anni_di_Blues.mp3",      titolo:"Venti Anni di Blues",  durata:"5:05" }
-];
+  { titolo:"Ippo Ippo", durata:"2:16", file:[
+      "media/01-ippo-ippo.mp3", "Ippo Ippo.mp3", "Ippo_Ippo.mp3" ]},
+  { titolo:"Irish Pub", durata:"3:40", file:[
+      "media/02-irish-pub.mp3", "Irish Pub.mp3", "Irish_Pub.mp3" ]},
+  { titolo:"Napul è Ammore", durata:"4:34", file:[
+      "media/03-napul-e-ammore.mp3", "Napul'è Ammore.mp3", "Napul è Ammore.mp3", "Napul_è_Ammore.mp3" ]},
+  { titolo:"Reaggaeton", durata:"3:42", file:[
+      "media/04-reaggaeton.mp3", "Reaggaeton.mp3" ]},
+  { titolo:"Techno pesante", durata:"3:07", file:[
+      "media/05-techno-pesante.mp3", "Techno pesante.mp3", "Techno_pesante.mp3" ]},
+  { titolo:"Vent'anni i Respettu", durata:"2:46", file:[
+      "media/06-vent-anni-i-respettu.mp3", "Vent'anni 'i Respettu.mp3", "Vent_anni__i_Respettu.mp3" ]},
+  { titolo:"Venti Anni di Blues", durata:"5:05", file:[
+      "media/07-venti-anni-di-blues.mp3", "Venti Anni di Blues.mp3", "Venti_Anni_di_Blues.mp3" ]}
+]
 
 const CITAZIONI = [
   ["La vita è quello che ti accade mentre sei impegnato a fare altri progetti.","John Lennon"],
@@ -1939,7 +1962,7 @@ function contenuto(id, forza){
       :`<p class="nota">Il barattolo è vuoto. Il primo ricordo è sempre il più difficile da scrivere.</p>`); }
   if (id==="video"){
     return cap("🎬","Il video","non lo trovi da nessun'altra parte")+
-      `<video class="filmato" controls playsinline preload="metadata" src="${VIDEO.file}"></video>
+      `<video class="filmato" controls playsinline preload="metadata">${VIDEO.file.map(f=>`<source src="${encodeURI(f)}">`).join("")}</video>
        <p class="bErr" id="vErr"></p>`; }
   if (id==="colonna"){
     return cap("🎧","Le tue canzoni",BRANI.length+" brani scritti apposta per te")+
@@ -1947,7 +1970,7 @@ function contenuto(id, forza){
       BRANI.map((b,i)=>`
         <div class="brano" data-i="${i}">
           <div class="bTesta"><span class="bn">${String(i+1).padStart(2,"0")}</span><b>${b.titolo}</b><span class="bd">${b.durata}</span></div>
-          <audio controls preload="none" src="${b.file}"></audio>
+          <audio controls preload="none">${b.file.map(f=>`<source src="${encodeURI(f)}">`).join("")}</audio>
           <p class="bErr" data-err="${i}"></p>
         </div>`).join("") +
       `</div>
@@ -1969,7 +1992,7 @@ function aggancia(id){
   if (id==="colonna") agganciaLettore();
   if (id==="video"){ const v=foglio.querySelector("video");
     if(v) v.addEventListener("error", ()=>{ const p=document.getElementById("vErr");
-      if(p) p.textContent = "⚠ file non trovato: " + VIDEO.file; }); }
+      if(p) p.textContent = "⚠ nessuno di questi file trovato: " + VIDEO.file.join("  ·  "); }); }
   if (id==="buste") foglio.querySelectorAll(".busta").forEach(b=>b.addEventListener("click",()=>{
     const i=+b.dataset.i; if(S.buste.includes(i)) return;
     S.buste=[...S.buste,i]; salva("sara4:buste",S.buste); coriandoli(80); apri("buste"); statistiche(); }));
@@ -1992,7 +2015,7 @@ function agganciaLettore(){
     a.addEventListener("play", ()=> audio.forEach((b,j)=>{ if(j!==i) b.pause(); }));
     a.addEventListener("error", ()=>{
       const p = foglio.querySelector('[data-err="'+i+'"]');
-      if (p) p.textContent = "⚠ file non trovato: " + BRANI[i].file;
+      if (p) p.textContent = "⚠ nessuno di questi file trovato: " + BRANI[i].file.join("  ·  ");
     });
   });
   const bottone = document.getElementById("controlla");
@@ -2000,14 +2023,14 @@ function agganciaLettore(){
     const esito = document.getElementById("esito");
     esito.innerHTML = '<p class="nota">Controllo in corso…</p>';
     const righe = [];
-    for (const b of [VIDEO, ...BRANI]){
-      const nome = b.file;
-      let stato;
-      try {
-        const r = await fetch(nome, { method:"HEAD", cache:"no-store" });
-        stato = r.ok ? "✅ trovato" : "❌ manca (errore " + r.status + ")";
-      } catch { stato = "❌ non raggiungibile"; }
-      righe.push('<p class="riga"><code>'+nome+'</code> '+stato+'</p>');
+    for (const b of [{titolo:"Il video", file:VIDEO.file}, ...BRANI]){
+      let trovato = null;
+      for (const nome of b.file){
+        try { const r = await fetch(encodeURI(nome), { method:"HEAD", cache:"no-store" }); if (r.ok){ trovato = nome; break; } } catch {}
+      }
+      righe.push('<p class="riga">' + (trovato
+        ? '✅ <b>'+b.titolo+'</b> → <code>'+trovato+'</code>'
+        : '❌ <b>'+b.titolo+'</b> — nessuno di questi nomi esiste: <code>'+b.file.join('</code> <code>')+'</code>') + '</p>');
     }
     esito.innerHTML = '<div class="indizi"><h4>Esito del controllo</h4>'+righe.join("")+
       '<p class="nota">I file col ❌ non sono nella stessa cartella dell\'index.html, oppure hanno un nome diverso. Su GitHub maiuscole e minuscole contano.</p></div>';
@@ -2041,6 +2064,16 @@ function coriandoli(n){
   }
   requestAnimationFrame(animaC);
 })();
+
+/* ═════════ IL BIGLIETTO D'APERTURA ═════════ */
+const biglietto = document.getElementById("biglietto");
+document.getElementById("bNome").textContent  = NOME;
+document.getElementById("bTesto").textContent = MESSAGGIO_PERSONALE.replace(/^\s*Sara,\s*/i, "").trim();
+document.getElementById("bFirma").textContent = "— " + FIRMA;
+function chiudiBiglietto(){ biglietto.classList.add("via"); }
+document.getElementById("bEntra").addEventListener("click", chiudiBiglietto);
+biglietto.addEventListener("click", e=>{ if(e.target===biglietto) chiudiBiglietto(); });
+addEventListener("keydown", e=>{ if(e.key==="Escape") chiudiBiglietto(); });
 
 const barra=document.getElementById("brindisi"); let tB;
 function brindisi(t){ barra.textContent=t; barra.classList.add("su"); clearTimeout(tB); tB=setTimeout(()=>barra.classList.remove("su"),5200); }
@@ -2219,6 +2252,37 @@ textarea:focus{border-color:#A88BEB}
 @keyframes respiro{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @media(max-width:560px){.big{padding:11px 17px;font-size:13px;gap:7px}.big span{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.big{animation:none}}
+
+
+/* ── il biglietto che si apre per primo ── */
+#biglietto{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:22px;
+  background:radial-gradient(circle at 50% 40%,rgba(42,23,71,.96),rgba(13,7,24,.98));
+  backdrop-filter:blur(8px);transition:opacity .7s,visibility .7s}
+#biglietto.via{opacity:0;visibility:hidden;pointer-events:none}
+#biglietto .foglio{max-width:600px;width:100%;max-height:88vh;overflow-y:auto;text-align:left;
+  padding:clamp(24px,5vw,44px) clamp(20px,5vw,44px) clamp(20px,4vw,32px);border-radius:26px;border:1px solid rgba(255,216,102,.28);
+  background:linear-gradient(165deg,rgba(52,33,84,.96),rgba(28,16,50,.98));
+  box-shadow:0 40px 100px rgba(0,0,0,.65);animation:apriBiglietto .9s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes apriBiglietto{from{opacity:0;transform:translateY(28px) scale(.94)}}
+#biglietto .nastro{font-size:44px;line-height:1;text-align:center;margin-bottom:12px;
+  filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));animation:respiro 3.4s ease-in-out infinite}
+#biglietto h2{font-family:var(--display);font-weight:600;font-size:clamp(27px,5vw,40px);line-height:1.1;
+  margin:0 0 22px;text-align:center}
+#biglietto h2 em{font-style:normal;background:linear-gradient(100deg,#FFD866,#FF9EC4 45%,#A88BEB 75%,#5FD3C4);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+#bTesto{font-family:var(--display);font-size:clamp(16.5px,2.3vw,19px);line-height:1.72;white-space:pre-line;
+  color:rgba(247,242,255,.94);margin:0 0 22px}
+.bFirma{font-family:var(--display);font-style:italic;font-size:19px;color:#FFD866;text-align:right;margin:0 0 22px}
+@media(max-height:700px){#biglietto .nastro{font-size:32px;margin-bottom:6px}
+  #biglietto h2{font-size:24px;margin-bottom:14px}
+  #bTesto{font-size:15px;line-height:1.6;margin-bottom:16px}
+  .bFirma{font-size:16px;margin-bottom:16px}}
+#bEntra{display:block;width:100%;padding:15px 0;border:none;border-radius:999px;cursor:pointer;
+  position:sticky;bottom:0;
+  font-family:var(--sans);font-weight:600;font-size:15.5px;color:#2A1240;
+  background:linear-gradient(100deg,#FFD866,#FF9EC4);box-shadow:0 16px 38px rgba(255,158,196,.36);
+  transition:transform .25s,filter .25s}
+#bEntra:hover{transform:translateY(-3px);filter:brightness(1.06)}
 
 :focus-visible{outline:2px solid #FFD866;outline-offset:4px}
 @media(max-height:700px){#scena{padding:120px 0 116px}#sotto{padding:22px 16px calc(20px + env(safe-area-inset-bottom))}
